@@ -1,0 +1,15 @@
+.vscode/**
+.git/**
+.gitignore
+.DS_Store
+*.vsix
+*.log
+node_modules/**
+src/**
+test/**
+tests/**
+coverage/**
+out/**
+dist/**
+tmp/**
+temp/**

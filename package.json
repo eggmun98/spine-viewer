@@ -1,0 +1,30 @@
+{
+  "name": "workspace-spine-viewer",
+  "displayName": "Workspace Spine Viewer",
+  "description": "Browse and preview Spine skeleton animations from the current VS Code workspace.",
+  "version": "0.0.1",
+  "publisher": "local",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": ["Visualization", "Other"],
+  "keywords": [
+    "spine",
+    "pixi",
+    "animation",
+    "preview",
+    "webp",
+    "atlas"
+  ],
+  "activationEvents": ["onCommand:spineViewer.open"],
+  "main": "./extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "spineViewer.open",
+        "title": "Spine Viewer: Open Workspace Spine Browser"
+      }
+    ]
+  }
+}

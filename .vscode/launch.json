@@ -1,0 +1,30 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Run Spine Viewer Extension",
+      "type": "extensionHost",
+      "request": "launch",
+      "args": [
+        "--extensionDevelopmentPath=${workspaceFolder}",
+        "--new-window",
+        "--disable-extension",
+        "Anthropic.claude-code-extension",
+        "/Users/mun/Desktop/dev-new/dev-work/stake_front/apps/2010_winsofolympus"
+      ],
+      "sourceMaps": false,
+      "resolveSourceMapLocations": [
+        "${workspaceFolder}/**",
+        "!**/node_modules/**",
+        "!/Applications/**",
+        "!/Users/mun/.vscode/extensions/**"
+      ],
+      "skipFiles": [
+        "<node_internals>/**",
+        "/Applications/**",
+        "/Users/mun/.vscode/extensions/**"
+      ],
+      "outFiles": []
+    }
+  ]
+}
