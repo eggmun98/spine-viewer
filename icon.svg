@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Spine Viewer icon">
+  <defs>
+    <linearGradient id="iris" x1="28" y1="23" x2="100" y2="105" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0ff0d4"/>
+      <stop offset=".5" stop-color="#18a7ff"/>
+      <stop offset="1" stop-color="#6758ff"/>
+    </linearGradient>
+    <linearGradient id="bone" x1="42" y1="36" x2="87" y2="91" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#c8f7ff"/>
+    </linearGradient>
+    <filter id="lift" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="5" stdDeviation="5" flood-color="#14305a" flood-opacity=".22"/>
+    </filter>
+  </defs>
+
+  <g filter="url(#lift)">
+    <path
+      d="M14 64C26 39 44 27 64 27S102 39 114 64C102 89 84 101 64 101S26 89 14 64Z"
+      fill="#ffffff"/>
+    <path
+      d="M20 64C31 44 47 34 64 34S97 44 108 64C97 84 81 94 64 94S31 84 20 64Z"
+      fill="url(#iris)"/>
+    <circle cx="64" cy="64" r="23" fill="#10213b" opacity=".92"/>
+  </g>
+
+  <path d="M48 76L61 55L79 69" fill="none" stroke="url(#bone)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="48" cy="76" r="9" fill="#ffffff"/>
+  <circle cx="61" cy="55" r="9" fill="#ffffff"/>
+  <circle cx="79" cy="69" r="9" fill="#ffffff"/>
+  <circle cx="48" cy="76" r="4" fill="#18a7ff"/>
+  <circle cx="61" cy="55" r="4" fill="#0ff0d4"/>
+  <circle cx="79" cy="69" r="4" fill="#6758ff"/>
+</svg>
