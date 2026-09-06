@@ -56,6 +56,7 @@ document.getElementById('app').innerHTML = `
       <div class="track">
         <div class="track-line"></div>
         <div class="playhead"></div>
+        <div class="tip hidden"></div>
       </div>
       <div class="track-scale"><span>0.00s</span><span class="track-end"></span></div>
     </div>
@@ -74,6 +75,7 @@ const els = {
   trackLine: document.querySelector('.track-line'),
   playhead: document.querySelector('.playhead'),
   trackEnd: document.querySelector('.track-end'),
+  tip: document.querySelector('.tip'),
   loopButton: document.querySelector('.toggle'),
   resetButton: document.querySelector('.reset'),
   stage: document.getElementById('stage'),
@@ -405,6 +407,7 @@ function readEvents(animationName) {
 
 function renderTimeline() {
   stopPlayhead();
+  hideTip();
   state.timeline = readEvents(state.animation);
   const hasEvents = (state.timeline?.events.length ?? 0) > 0;
   els.events.classList.toggle('hidden', !hasEvents);
@@ -422,22 +425,46 @@ function renderTimeline() {
     marker.className = 'marker';
     marker.dataset.index = String(index);
     marker.style.left = `${duration > 0 ? (event.time / duration) * 100 : 0}%`;
-    marker.title = `${event.name} @ ${event.time.toFixed(3)}s`;
+    marker.setAttribute('aria-label', summarise(event));
     marker.addEventListener('click', () => describeEvent(event));
+    marker.addEventListener('pointerenter', () => showTip(marker, event));
+    marker.addEventListener('pointerleave', hideTip);
+    marker.addEventListener('focus', () => showTip(marker, event));
+    marker.addEventListener('blur', hideTip);
     els.track.appendChild(marker);
   });
 
   startPlayhead();
 }
 
-function describeEvent(event) {
+function summarise(event) {
   const extras = [
     event.int ? `int ${event.int}` : null,
     event.float ? `float ${event.float}` : null,
     event.string ? `"${event.string}"` : null,
   ].filter(Boolean);
-  els.eventsLast.textContent =
-    `${event.name} · ${event.time.toFixed(3)}s` + (extras.length ? ` · ${extras.join(', ')}` : '');
+  return `${event.name} · ${event.time.toFixed(3)}s` + (extras.length ? ` · ${extras.join(', ')}` : '');
+}
+
+function describeEvent(event) {
+  els.eventsLast.textContent = summarise(event);
+}
+
+// Anchored to the marker rather than the cursor so it stays put, and clamped to
+// the track so markers at either end are not cut off.
+function showTip(marker, event) {
+  els.tip.textContent = summarise(event);
+  els.tip.classList.remove('hidden');
+
+  const trackWidth = els.track.clientWidth;
+  const tipWidth = els.tip.offsetWidth;
+  const centre = marker.offsetLeft;
+  const half = tipWidth / 2;
+  els.tip.style.left = `${clamp(centre, half, Math.max(half, trackWidth - half))}px`;
+}
+
+function hideTip() {
+  els.tip.classList.add('hidden');
 }
 
 function showFiredEvent(entry, event) {

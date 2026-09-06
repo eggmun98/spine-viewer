@@ -199,6 +199,7 @@ select {
 
 .events {
   padding: 8px 14px 10px;
+  overflow: visible;
   border-top: 1px solid var(--line);
   background: var(--toolbar-bg);
 }
@@ -282,6 +283,26 @@ select {
   height: 18px;
   background: var(--text);
   opacity: 0.75;
+}
+
+.tip {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  transform: translateX(-50%);
+  z-index: 2;
+  max-width: 320px;
+  overflow: hidden;
+  padding: 4px 8px;
+  color: var(--vscode-editorHoverWidget-foreground, var(--text));
+  background: var(--vscode-editorHoverWidget-background, #252526);
+  border: 1px solid var(--vscode-editorHoverWidget-border, var(--line));
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  pointer-events: none;
 }
 
 .track-scale {
