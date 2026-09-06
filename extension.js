@@ -12,7 +12,7 @@ const RUNTIME_EXCLUDE_GLOB = '**/{.git,dist,build,storybook-static}/**';
 
 async function activate(context) {
   let openedAutomatically = false;
-  const output = vscode.window.createOutputChannel('Workspace Spine Viewer');
+  const output = vscode.window.createOutputChannel('Spine Viewer');
   context.subscriptions.push(output);
 
   const log = (message) => {
@@ -22,8 +22,8 @@ async function activate(context) {
   const openViewer = async () => {
     log('Opening viewer panel.');
     const panel = vscode.window.createWebviewPanel(
-      'workspaceSpineViewer',
-      'Workspace Spine Viewer',
+      'spineViewer',
+      'Spine Viewer',
       vscode.ViewColumn.One,
       {
         enableScripts: true,
@@ -359,7 +359,7 @@ function getWebviewHtml({ context, panel, spines, runtime, initialMessage = '' }
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${webview.cspSource} data: blob:; font-src ${webview.cspSource}; style-src ${webview.cspSource} 'unsafe-inline'; script-src 'nonce-${nonce}' ${webview.cspSource}; connect-src ${webview.cspSource};">
   <link rel="stylesheet" href="${cssUri}">
-  <title>Workspace Spine Viewer</title>
+  <title>Spine Viewer</title>
 </head>
 <body>
   <div id="app"></div>

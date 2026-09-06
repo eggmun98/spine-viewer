@@ -22,7 +22,7 @@ appRoot.innerHTML = `
   <div class="shell">
     <aside class="sidebar">
       <div class="header">
-        <h1 class="title">Workspace Spine Viewer</h1>
+        <h1 class="title">Spine Viewer</h1>
         <div class="count"></div>
       </div>
       <input class="search" type="search" placeholder="Filter spines">

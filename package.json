@@ -1,6 +1,6 @@
 {
-  "name": "workspace-spine-viewer",
-  "displayName": "Workspace Spine Viewer",
+  "name": "spine-viewer",
+  "displayName": "Spine Viewer",
   "description": "Browse and preview Spine skeleton animations from the current VS Code workspace.",
   "version": "0.0.1",
   "publisher": "local",
@@ -23,7 +23,7 @@
     "commands": [
       {
         "command": "spineViewer.open",
-        "title": "Spine Viewer: Open Workspace Spine Browser"
+        "title": "Spine Viewer: Open Spine Browser"
       }
     ]
   }

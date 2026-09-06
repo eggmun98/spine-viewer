@@ -1,4 +1,4 @@
-# Workspace Spine Viewer
+# Spine Viewer
 
 Browse and preview Spine skeleton animations directly inside VS Code.
 
@@ -19,7 +19,7 @@ This extension scans the current workspace for Spine skeleton JSON files, pairs 
 
 1. Open a project that contains Spine assets.
 2. Open the Command Palette.
-3. Run `Spine Viewer: Open Workspace Spine Browser`.
+3. Run `Spine Viewer: Open Spine Browser`.
 4. Select a skeleton from the left list.
 5. Choose an animation from the toolbar.
 
@@ -51,7 +51,7 @@ For projects that use pnpm or npm workspaces, install dependencies and run the p
 
 If the preview panel opens but the canvas does not render, check:
 
-- `View > Output > Workspace Spine Viewer`
+- `View > Output > Spine Viewer`
 - Whether the project has installed dependencies
 - Whether the skeleton JSON, atlas file, and atlas page images are in the same folder
 - Whether the atlas page names exactly match the image filenames
