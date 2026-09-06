@@ -156,30 +156,49 @@ function commonPrefixLength(paths) {
   return depth;
 }
 
-// A folder that only leads to one other folder is a step with nothing to choose,
-// so fold the chain into a single row the way the Explorer's compact folders do.
+// A folder with nothing to choose inside it is a wasted click, so fold it away
+// the way the Explorer's compact folders do. Over half the spine folders here
+// hold a single skeleton named after the folder.
 function compact(node) {
   for (const child of node.children) {
     if (child.kind === 'folder') compact(child);
   }
 
-  for (let i = 0; i < node.children.length; i += 1) {
-    let child = node.children[i];
-    while (
-      child.kind === 'folder' &&
-      child.children.length === 1 &&
-      child.children[0].kind === 'folder'
-    ) {
-      const only = child.children[0];
-      child = { kind: 'folder', label: `${child.label}/${only.label}`, children: only.children };
-    }
-    node.children[i] = child;
-  }
-
+  node.children = node.children.map(collapse);
   node.children.sort(
     (a, b) =>
       (a.kind === b.kind ? 0 : a.kind === 'folder' ? -1 : 1) || a.label.localeCompare(b.label),
   );
+}
+
+function collapse(node) {
+  let current = node;
+
+  while (
+    current.kind === 'folder' &&
+    current.children.length === 1 &&
+    current.children[0].kind === 'folder'
+  ) {
+    const only = current.children[0];
+    current = { kind: 'folder', label: `${current.label}/${only.label}`, children: only.children };
+  }
+
+  if (
+    current.kind === 'folder' &&
+    current.children.length === 1 &&
+    current.children[0].kind === 'skeleton'
+  ) {
+    const skeleton = current.children[0];
+    // Keep the folder name when it says something the file name does not,
+    // otherwise sibling rows could end up identical.
+    const label =
+      current.label.toLowerCase() === skeleton.label.toLowerCase()
+        ? skeleton.label
+        : `${current.label} / ${skeleton.label}`;
+    return { ...skeleton, label };
+  }
+
+  return current;
 }
 
 /* ------------------------------------------------------------------ *
