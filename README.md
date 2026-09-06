@@ -11,6 +11,8 @@ Every skeleton in the workspace shows up in a sidebar tree, grouped by folder. C
 - Sidebar tree of every skeleton in the workspace, grouped by folder
 - Works with any folder layout: skeletons are found by their `.atlas`, not by a fixed assets path
 - Animation selector for each skeleton
+- Event timeline: a marker for every event key, a playhead, and the values as they fire
+- Playback speed, for checking timing frame by frame
 - Loop toggle
 - Manual scale input
 - Mouse drag to pan the preview
@@ -46,6 +48,15 @@ space-game/assets/spines
     thruster      idle, boost
   ui / coin       idle, spin
 ```
+
+## Events
+
+Animations that carry event keys get a timeline under the preview. Each marker sits at the event's
+time, the playhead tracks playback, and a marker flashes as its event fires. Click any marker to
+print its name, time, and int/float/string values.
+
+Animations without events do not show the timeline. Slow the playback speed down to read events
+that fire close together.
 
 ## Asset Discovery
 

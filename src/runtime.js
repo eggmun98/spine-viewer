@@ -6,10 +6,19 @@ import * as pixi from 'pixi.js';
 import 'pixi.js/unsafe-eval';
 import {
   AtlasAttachmentLoader,
+  EventTimeline,
   SkeletonJson,
   Spine,
   SpineTexture,
   TextureAtlas,
 } from '@esotericsoftware/spine-pixi-v8';
 
-export { pixi, AtlasAttachmentLoader, SkeletonJson, Spine, SpineTexture, TextureAtlas };
+export {
+  pixi,
+  AtlasAttachmentLoader,
+  EventTimeline,
+  SkeletonJson,
+  Spine,
+  SpineTexture,
+  TextureAtlas,
+};

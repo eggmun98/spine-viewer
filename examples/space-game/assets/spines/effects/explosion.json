@@ -53,6 +53,11 @@
       }
     }
   ],
+  "events": {
+    "impact": {
+      "float": 0
+    }
+  },
   "animations": {
     "burst": {
       "bones": {
@@ -89,7 +94,19 @@
             }
           ]
         }
-      }
+      },
+      "events": [
+        {
+          "time": 0.05,
+          "name": "impact",
+          "float": 0.4
+        },
+        {
+          "time": 0.25,
+          "name": "impact",
+          "float": 1
+        }
+      ]
     },
     "idle": {
       "bones": {

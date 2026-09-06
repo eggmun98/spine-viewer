@@ -153,6 +153,12 @@
       }
     }
   ],
+  "events": {
+    "footstep": {
+      "string": "left"
+    },
+    "wave": {}
+  },
   "animations": {
     "idle": {
       "bones": {
@@ -235,7 +241,19 @@
             }
           ]
         }
-      }
+      },
+      "events": [
+        {
+          "time": 0.3,
+          "name": "wave",
+          "int": 1
+        },
+        {
+          "time": 0.9,
+          "name": "wave",
+          "int": 2
+        }
+      ]
     },
     "walk": {
       "bones": {
@@ -332,7 +350,19 @@
             }
           ]
         }
-      }
+      },
+      "events": [
+        {
+          "time": 0,
+          "name": "footstep",
+          "string": "left"
+        },
+        {
+          "time": 0.4,
+          "name": "footstep",
+          "string": "right"
+        }
+      ]
     }
   }
 }
