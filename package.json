@@ -22,16 +22,57 @@
     "atlas"
   ],
   "activationEvents": [
-    "onCommand:spineViewer.open"
+    "onView:spineViewer.tree"
   ],
   "main": "./extension.js",
   "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "spineViewer",
+          "title": "Spine Viewer",
+          "icon": "media/spine-activity.svg"
+        }
+      ]
+    },
+    "views": {
+      "spineViewer": [
+        {
+          "id": "spineViewer.tree",
+          "name": "Skeletons",
+          "icon": "media/spine-activity.svg",
+          "contextualTitle": "Spine Viewer"
+        }
+      ]
+    },
     "commands": [
       {
         "command": "spineViewer.open",
-        "title": "Spine Viewer: Open Spine Browser"
+        "title": "Focus Skeleton List",
+        "category": "Spine Viewer"
+      },
+      {
+        "command": "spineViewer.refresh",
+        "title": "Refresh",
+        "category": "Spine Viewer",
+        "icon": "$(refresh)"
       }
-    ]
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "spineViewer.refresh",
+          "when": "view == spineViewer.tree",
+          "group": "navigation"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "spineViewer.refresh",
+          "when": "true"
+        }
+      ]
+    }
   },
   "dependencies": {
     "@esotericsoftware/spine-pixi-v8": "4.2.74",

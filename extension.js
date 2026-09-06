@@ -1,16 +1,12 @@
 const path = require('path');
 const vscode = require('vscode');
 
-const JSON_GLOBS = [
-  'static/assets/spines/**/*.json',
-  'public/assets/spines/**/*.json',
-  'assets/spines/**/*.json',
-  'src/assets/spines/**/*.json',
-];
-const EXCLUDE_GLOB = '**/{node_modules,.git,dist,build,storybook-static}/**';
+const ATLAS_GLOB = '**/*.atlas';
+const SKELETON_GLOB = '**/*.json';
+const EXCLUDE_GLOB =
+  '**/{node_modules,.git,dist,build,out,coverage,storybook-static,.svelte-kit,.next,.nuxt,.cache}/**';
 
-async function activate(context) {
-  let openedAutomatically = false;
+function activate(context) {
   const output = vscode.window.createOutputChannel('Spine Viewer');
   context.subscriptions.push(output);
 
@@ -18,284 +14,267 @@ async function activate(context) {
     output.appendLine(`[${new Date().toLocaleTimeString()}] ${message}`);
   };
 
-  const openViewer = async () => {
-    log('Opening viewer panel.');
-    const panel = vscode.window.createWebviewPanel(
+  const tree = new SpineTreeProvider(log);
+  const preview = new SpinePreview(context, log);
+
+  const view = vscode.window.createTreeView('spineViewer.tree', {
+    treeDataProvider: tree,
+    showCollapseAll: true,
+  });
+  context.subscriptions.push(view, preview);
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand('spineViewer.refresh', () => tree.refresh()),
+    vscode.commands.registerCommand('spineViewer.preview', (node) => preview.show(node)),
+    vscode.commands.registerCommand('spineViewer.open', () =>
+      vscode.commands.executeCommand('spineViewer.tree.focus'),
+    ),
+    vscode.workspace.onDidChangeWorkspaceFolders(() => tree.refresh()),
+  );
+}
+
+/* ------------------------------------------------------------------ *
+ * Discovery
+ * ------------------------------------------------------------------ */
+
+// Skeletons are found by their atlas, not by a hardcoded assets path: a Spine
+// skeleton always sits next to its atlas, and `.atlas` is close to unique to
+// Spine. That keeps discovery working whatever a project calls its folders.
+async function findSkeletons() {
+  const [atlasUris, jsonUris] = await Promise.all([
+    vscode.workspace.findFiles(ATLAS_GLOB, EXCLUDE_GLOB),
+    vscode.workspace.findFiles(SKELETON_GLOB, EXCLUDE_GLOB),
+  ]);
+
+  const atlasDirs = new Set(atlasUris.map((uri) => path.dirname(uri.fsPath)));
+  return jsonUris
+    .filter((uri) => atlasDirs.has(path.dirname(uri.fsPath)))
+    .sort((a, b) => a.fsPath.localeCompare(b.fsPath));
+}
+
+/* ------------------------------------------------------------------ *
+ * Tree
+ * ------------------------------------------------------------------ */
+
+class SpineTreeProvider {
+  constructor(log) {
+    this.log = log;
+    this.root = null;
+    this.emitter = new vscode.EventEmitter();
+    this.onDidChangeTreeData = this.emitter.event;
+  }
+
+  refresh() {
+    this.root = null;
+    this.emitter.fire();
+  }
+
+  async getChildren(node) {
+    if (node) return node.children ?? [];
+
+    if (!this.root) {
+      const started = Date.now();
+      const uris = await findSkeletons();
+      this.root = buildTree(uris);
+      this.log(`Found ${uris.length} skeletons in ${Date.now() - started}ms.`);
+    }
+
+    return this.root;
+  }
+
+  getTreeItem(node) {
+    if (node.kind === 'skeleton') {
+      const item = new vscode.TreeItem(node.label, vscode.TreeItemCollapsibleState.None);
+      item.resourceUri = node.uri;
+      item.iconPath = new vscode.ThemeIcon('symbol-color');
+      item.tooltip = vscode.workspace.asRelativePath(node.uri, true);
+      item.command = {
+        command: 'spineViewer.preview',
+        title: 'Preview Spine Skeleton',
+        arguments: [node],
+      };
+      return item;
+    }
+
+    const item = new vscode.TreeItem(node.label, vscode.TreeItemCollapsibleState.Collapsed);
+    item.iconPath = vscode.ThemeIcon.Folder;
+    item.description = `${countSkeletons(node)}`;
+    return item;
+  }
+}
+
+function countSkeletons(node) {
+  if (node.kind === 'skeleton') return 1;
+  return node.children.reduce((sum, child) => sum + countSkeletons(child), 0);
+}
+
+function buildTree(uris) {
+  if (uris.length === 0) return [];
+
+  const entries = uris.map((uri) => ({
+    uri,
+    segments: vscode.workspace.asRelativePath(uri, true).split(/[\\/]/),
+  }));
+
+  // Every project buries its skeletons under some fixed prefix. Drop whatever
+  // all of them share so the tree starts where the paths actually diverge.
+  const depth = commonPrefixLength(entries.map((entry) => entry.segments));
+  const root = { kind: 'folder', label: '', children: [] };
+
+  for (const { uri, segments } of entries) {
+    const trail = segments.slice(depth);
+    const name = trail.pop();
+    let cursor = root;
+
+    for (const part of trail) {
+      let next = cursor.children.find(
+        (child) => child.kind === 'folder' && child.label === part,
+      );
+      if (!next) {
+        next = { kind: 'folder', label: part, children: [] };
+        cursor.children.push(next);
+      }
+      cursor = next;
+    }
+
+    cursor.children.push({ kind: 'skeleton', label: name.replace(/\.json$/i, ''), uri });
+  }
+
+  compact(root);
+  return root.children;
+}
+
+function commonPrefixLength(paths) {
+  const [first] = paths;
+  let depth = 0;
+
+  // Never consume the file name itself, or a single skeleton would have no label.
+  while (depth < first.length - 1 && paths.every((p) => p[depth] === first[depth])) {
+    depth += 1;
+  }
+
+  return depth;
+}
+
+// A folder that only leads to one other folder is a step with nothing to choose,
+// so fold the chain into a single row the way the Explorer's compact folders do.
+function compact(node) {
+  for (const child of node.children) {
+    if (child.kind === 'folder') compact(child);
+  }
+
+  for (let i = 0; i < node.children.length; i += 1) {
+    let child = node.children[i];
+    while (
+      child.kind === 'folder' &&
+      child.children.length === 1 &&
+      child.children[0].kind === 'folder'
+    ) {
+      const only = child.children[0];
+      child = { kind: 'folder', label: `${child.label}/${only.label}`, children: only.children };
+    }
+    node.children[i] = child;
+  }
+
+  node.children.sort(
+    (a, b) =>
+      (a.kind === b.kind ? 0 : a.kind === 'folder' ? -1 : 1) || a.label.localeCompare(b.label),
+  );
+}
+
+/* ------------------------------------------------------------------ *
+ * Preview panel
+ * ------------------------------------------------------------------ */
+
+class SpinePreview {
+  constructor(context, log) {
+    this.context = context;
+    this.log = log;
+    this.panel = null;
+    this.pending = null;
+  }
+
+  dispose() {
+    this.panel?.dispose();
+  }
+
+  async show(node) {
+    if (!node?.uri) return;
+
+    if (!this.panel) {
+      this.createPanel();
+      this.pending = node.uri;
+      return;
+    }
+
+    this.panel.reveal(vscode.ViewColumn.Active, true);
+    await this.send(node.uri);
+  }
+
+  createPanel() {
+    this.panel = vscode.window.createWebviewPanel(
       'spineViewer',
       'Spine Viewer',
-      vscode.ViewColumn.One,
+      { viewColumn: vscode.ViewColumn.Active, preserveFocus: true },
       {
         enableScripts: true,
         retainContextWhenHidden: true,
-        localResourceRoots: getLocalResourceRoots(context),
+        localResourceRoots: [
+          this.context.extensionUri,
+          ...(vscode.workspace.workspaceFolders ?? []).map((folder) => folder.uri),
+        ],
       },
     );
 
-    panel.webview.onDidReceiveMessage((message) => {
+    this.panel.onDidDispose(() => {
+      this.panel = null;
+      this.pending = null;
+    });
+
+    this.panel.webview.onDidReceiveMessage((message) => {
       if (message?.type === 'log') {
-        log(`[webview] ${message.message}`);
+        this.log(`[webview] ${message.message}`);
+        return;
+      }
+      if (message?.type === 'ready' && this.pending) {
+        const uri = this.pending;
+        this.pending = null;
+        this.send(uri);
       }
     });
 
-    panel.webview.html = getWebviewHtml({
-      context,
-      panel,
-      spines: [],
-      initialMessage: 'Scanning workspace spines...',
-    });
+    this.panel.webview.html = this.getHtml();
+  }
 
+  async send(skeletonUri) {
     try {
-      await vscode.window.withProgress(
-        {
-          location: vscode.ProgressLocation.Notification,
-          title: 'Scanning workspace spines',
-          cancellable: false,
-        },
-        async () => {
-          log(`Scanning roots: ${getScanRoots().map((root) => root.fsPath).join(', ')}`);
-          const spines = await scanWorkspaceSpines();
-          log(`Found ${spines.length} skeletons.`);
-          log(`Skeletons with atlas: ${spines.filter((item) => item.atlasUri).length}.`);
-          panel.webview.html = getWebviewHtml({
-            context,
-            panel,
-            spines,
-            initialMessage: spines.length
-              ? ''
-              : 'No Spine skeleton JSON files were found in this workspace.',
-          });
-
-          log(`Viewer ready with ${spines.length} skeletons.`);
-        },
-      );
+      const payload = await buildPayload(this.panel.webview, skeletonUri);
+      this.log(`Preview ${payload.name}: atlas=${payload.atlasName ?? 'missing'}`);
+      await this.panel.webview.postMessage({ type: 'load', payload });
     } catch (error) {
-      const message = error?.message ?? String(error);
-      log(`Scan failed: ${message}`);
-      panel.webview.html = getWebviewHtml({
-        context,
-        panel,
-        spines: [],
-        initialMessage: message,
+      const reason = error?.message ?? String(error);
+      this.log(`Preview failed for ${skeletonUri.fsPath}: ${reason}`);
+      await this.panel.webview.postMessage({
+        type: 'load',
+        payload: { name: path.basename(skeletonUri.fsPath), error: reason },
       });
-      vscode.window.showErrorMessage(`Spine Viewer failed: ${message}`);
     }
-  };
-
-  context.subscriptions.push(
-    vscode.commands.registerCommand('spineViewer.open', openViewer),
-  );
-  const openAutomatically = () => {
-    if (openedAutomatically) return;
-    if (context.extensionMode !== vscode.ExtensionMode.Development) return;
-    if (!vscode.workspace.workspaceFolders?.length) return;
-
-    openedAutomatically = true;
-    setTimeout(() => {
-      openViewer();
-    }, 300);
-  };
-
-  openAutomatically();
-  setTimeout(openAutomatically, 1500);
-  context.subscriptions.push(vscode.workspace.onDidChangeWorkspaceFolders(openAutomatically));
-}
-
-function getLocalResourceRoots(context) {
-  return [
-    context.extensionUri,
-    ...(vscode.workspace.workspaceFolders ?? []).map((folder) => folder.uri),
-  ];
-}
-
-async function scanWorkspaceSpines() {
-  const roots = getScanRoots();
-  const skeletonUris = uniqueUris(
-    (
-      await Promise.all(
-        roots.flatMap((root) =>
-          JSON_GLOBS.map((glob) =>
-            vscode.workspace.findFiles(
-              new vscode.RelativePattern(root.fsPath, glob),
-              EXCLUDE_GLOB,
-              2000,
-            ),
-          ),
-        ),
-      )
-    ).flat(),
-  );
-  const items = [];
-
-  for (const skeletonUri of skeletonUris) {
-    const json = await readJson(skeletonUri);
-    if (!json?.skeleton || !json?.animations || typeof json.animations !== 'object') {
-      continue;
-    }
-
-    const atlasUri = await findAtlasForSkeleton(skeletonUri);
-    const atlasPages = atlasUri ? await readAtlasPages(atlasUri) : [];
-    const animations = Object.keys(json.animations).sort((a, b) => a.localeCompare(b));
-    const root = vscode.workspace.getWorkspaceFolder(skeletonUri);
-    const relativePath = root
-      ? path.relative(root.uri.fsPath, skeletonUri.fsPath)
-      : skeletonUri.fsPath;
-
-    items.push({
-      id: skeletonUri.toString(),
-      name: path.basename(skeletonUri.fsPath, '.json'),
-      folder: path.basename(path.dirname(skeletonUri.fsPath)),
-      relativePath,
-      skeletonUri: skeletonUri.toString(),
-      atlasUri: atlasUri?.toString() ?? null,
-      atlasText: atlasUri ? await readText(atlasUri) : null,
-      atlasPages: atlasPages.map((pageName) => ({
-        name: pageName,
-        uri: vscode.Uri.file(path.join(path.dirname(atlasUri.fsPath), pageName)).toString(),
-      })),
-      animations,
-      defaultAnimation: pickDefaultAnimation(animations),
-    });
   }
 
-  return items.sort((a, b) => a.relativePath.localeCompare(b.relativePath));
-}
+  getHtml() {
+    const { webview } = this.panel;
+    const nonce = getNonce();
+    const cssUri = webview.asWebviewUri(
+      vscode.Uri.joinPath(this.context.extensionUri, 'media', 'viewer.css'),
+    );
+    const scriptUri = webview.asWebviewUri(
+      vscode.Uri.joinPath(this.context.extensionUri, 'media', 'viewer.js'),
+    );
+    const runtimeUri = webview.asWebviewUri(
+      vscode.Uri.joinPath(this.context.extensionUri, 'media', 'runtime.js'),
+    );
 
-async function readAtlasPages(uri) {
-  try {
-    const bytes = await vscode.workspace.fs.readFile(uri);
-    const text = Buffer.from(bytes).toString('utf8');
-    const pages = [];
-
-    for (const rawLine of text.split(/\r\n|\r|\n/)) {
-      const line = rawLine.trim();
-      if (!line || line.includes(':')) continue;
-      if (/\.(png|webp|jpg|jpeg)$/i.test(line)) {
-        pages.push(line);
-      }
-    }
-
-    return pages;
-  } catch {
-    return [];
-  }
-}
-
-function getScanRoots() {
-  const workspaceFolders = vscode.workspace.workspaceFolders ?? [];
-  const activeFile = vscode.window.activeTextEditor?.document.uri;
-  const activeAppRoot = activeFile ? findAppRoot(activeFile.fsPath) : null;
-
-  if (activeAppRoot) {
-    return [vscode.Uri.file(activeAppRoot)];
-  }
-
-  return workspaceFolders.map((folder) => folder.uri);
-}
-
-function findAppRoot(filePath) {
-  const parts = filePath.split(path.sep);
-  const appsIndex = parts.lastIndexOf('apps');
-  if (appsIndex < 0 || appsIndex + 1 >= parts.length) {
-    return null;
-  }
-
-  return parts.slice(0, appsIndex + 2).join(path.sep);
-}
-
-function uniqueUris(uris) {
-  const seen = new Set();
-  return uris.filter((uri) => {
-    const key = uri.toString();
-    if (seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
-}
-
-async function readJson(uri) {
-  try {
-    return JSON.parse(await readText(uri));
-  } catch {
-    return null;
-  }
-}
-
-async function readText(uri) {
-  const bytes = await vscode.workspace.fs.readFile(uri);
-  return Buffer.from(bytes).toString('utf8');
-}
-
-async function findAtlasForSkeleton(skeletonUri) {
-  const dir = vscode.Uri.file(path.dirname(skeletonUri.fsPath));
-  const skeletonName = path.basename(skeletonUri.fsPath, '.json');
-  const sameNameAtlas = vscode.Uri.joinPath(dir, `${skeletonName}.atlas`);
-
-  if (await exists(sameNameAtlas)) {
-    return sameNameAtlas;
-  }
-
-  const atlasUris = await vscode.workspace.findFiles(
-    new vscode.RelativePattern(dir.fsPath, '*.atlas'),
-    undefined,
-    20,
-  );
-
-  if (atlasUris.length === 1) {
-    return atlasUris[0];
-  }
-
-  const folderName = path.basename(dir.fsPath);
-  return (
-    atlasUris.find((uri) => path.basename(uri.fsPath, '.atlas') === folderName) ??
-    atlasUris.find((uri) => path.basename(uri.fsPath).toLowerCase().includes('symbol')) ??
-    atlasUris[0] ??
-    null
-  );
-}
-
-async function exists(uri) {
-  try {
-    await vscode.workspace.fs.stat(uri);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-function pickDefaultAnimation(animations) {
-  return (
-    animations.find((name) => name === 'default') ??
-    animations.find((name) => name === 'Idle') ??
-    animations.find((name) => name === 'idle') ??
-    animations[0] ??
-    null
-  );
-}
-
-function getWebviewHtml({ context, panel, spines, initialMessage = '' }) {
-  const { webview } = panel;
-  const nonce = getNonce();
-  const cssUri = webview.asWebviewUri(vscode.Uri.joinPath(context.extensionUri, 'media', 'viewer.css'));
-  const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(context.extensionUri, 'media', 'viewer.js'));
-  const runtimeUri = webview.asWebviewUri(vscode.Uri.joinPath(context.extensionUri, 'media', 'runtime.js'));
-
-  const payload = {
-    spines: spines.map((item) => ({
-      ...item,
-      skeletonUrl: webview.asWebviewUri(vscode.Uri.parse(item.skeletonUri)).toString(),
-      atlasUrl: item.atlasUri ? webview.asWebviewUri(vscode.Uri.parse(item.atlasUri)).toString() : null,
-      atlasImages: Object.fromEntries(
-        item.atlasPages.map((page) => [
-          page.name,
-          webview.asWebviewUri(vscode.Uri.parse(page.uri)).toString(),
-        ]),
-      ),
-    })),
-    runtimeUrl: runtimeUri.toString(),
-    initialMessage,
-  };
-
-  return `<!doctype html>
+    return `<!doctype html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -307,11 +286,99 @@ function getWebviewHtml({ context, panel, spines, initialMessage = '' }) {
 <body>
   <div id="app"></div>
   <script nonce="${nonce}">
-    window.__SPINE_VIEWER_DATA__ = ${JSON.stringify(payload)};
+    window.__SPINE_RUNTIME_URL__ = ${JSON.stringify(runtimeUri.toString())};
   </script>
   <script nonce="${nonce}" type="module" src="${scriptUri}"></script>
 </body>
 </html>`;
+  }
+}
+
+// Read only what the selected skeleton needs. Nothing here runs during discovery.
+async function buildPayload(webview, skeletonUri) {
+  const atlasUri = await findAtlasForSkeleton(skeletonUri);
+  const name = path.basename(skeletonUri.fsPath, '.json');
+  const relativePath = vscode.workspace.asRelativePath(skeletonUri, true);
+
+  if (!atlasUri) {
+    return { name, relativePath, error: 'No .atlas file was found next to this skeleton.' };
+  }
+
+  const atlasDir = path.dirname(atlasUri.fsPath);
+  const pages = await readAtlasPages(atlasUri);
+
+  return {
+    name,
+    relativePath,
+    skeletonUrl: webview.asWebviewUri(skeletonUri).with({ query: `v=${Date.now()}` }).toString(),
+    atlasName: path.basename(atlasUri.fsPath),
+    atlasText: await readText(atlasUri),
+    atlasImages: Object.fromEntries(
+      pages.map((page) => [
+        page,
+        webview
+          .asWebviewUri(vscode.Uri.file(path.join(atlasDir, page)))
+          .with({ query: `v=${Date.now()}` })
+          .toString(),
+      ]),
+    ),
+  };
+}
+
+async function findAtlasForSkeleton(skeletonUri) {
+  const dir = path.dirname(skeletonUri.fsPath);
+  const skeletonName = path.basename(skeletonUri.fsPath, '.json');
+  const sameName = vscode.Uri.file(path.join(dir, `${skeletonName}.atlas`));
+
+  if (await exists(sameName)) return sameName;
+
+  const entries = await vscode.workspace.fs.readDirectory(vscode.Uri.file(dir));
+  const atlases = entries
+    .filter(([name, type]) => type === vscode.FileType.File && name.toLowerCase().endsWith('.atlas'))
+    .map(([name]) => name);
+
+  if (atlases.length === 0) return null;
+
+  const folderName = path.basename(dir);
+  const picked =
+    atlases.find((name) => path.basename(name, '.atlas') === folderName) ?? atlases[0];
+  return vscode.Uri.file(path.join(dir, picked));
+}
+
+// Page names are the first line of the file and the first line after each blank
+// separator. Region names also lack a colon, so position is the only signal.
+async function readAtlasPages(uri) {
+  const text = await readText(uri);
+  const pages = [];
+  let expectPageName = true;
+
+  for (const rawLine of text.split(/\r\n|\r|\n/)) {
+    const line = rawLine.trim();
+    if (!line) {
+      expectPageName = true;
+      continue;
+    }
+    if (expectPageName) {
+      pages.push(line);
+      expectPageName = false;
+    }
+  }
+
+  return pages;
+}
+
+async function readText(uri) {
+  const bytes = await vscode.workspace.fs.readFile(uri);
+  return Buffer.from(bytes).toString('utf8');
+}
+
+async function exists(uri) {
+  try {
+    await vscode.workspace.fs.stat(uri);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 function getNonce() {
@@ -325,7 +392,4 @@ function getNonce() {
 
 function deactivate() {}
 
-module.exports = {
-  activate,
-  deactivate,
-};
+module.exports = { activate, deactivate };
