@@ -2,7 +2,7 @@
   "name": "spine-viewer",
   "displayName": "Spine Viewer",
   "description": "Browse and preview Spine skeleton animations from the current VS Code workspace.",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "publisher": "eggmun",
   "icon": "icon.png",
   "license": "MIT",
