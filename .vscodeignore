@@ -6,6 +6,7 @@
 *.log
 node_modules/**
 src/**
+examples/**
 test/**
 tests/**
 coverage/**

@@ -1,0 +1,124 @@
+{
+  "skeleton": {
+    "hash": "thruster",
+    "spine": "4.2.00",
+    "x": -20,
+    "y": -50,
+    "width": 40,
+    "height": 60,
+    "images": "./",
+    "audio": ""
+  },
+  "bones": [
+    {
+      "name": "root"
+    },
+    {
+      "name": "nozzle",
+      "parent": "root"
+    },
+    {
+      "name": "flame",
+      "parent": "root",
+      "y": -26
+    }
+  ],
+  "slots": [
+    {
+      "name": "flame",
+      "bone": "flame",
+      "attachment": "flame"
+    },
+    {
+      "name": "nozzle",
+      "bone": "nozzle",
+      "attachment": "nozzle"
+    }
+  ],
+  "skins": [
+    {
+      "name": "default",
+      "attachments": {
+        "flame": {
+          "flame": {
+            "width": 26,
+            "height": 46
+          }
+        },
+        "nozzle": {
+          "nozzle": {
+            "width": 32,
+            "height": 14
+          }
+        }
+      }
+    }
+  ],
+  "animations": {
+    "idle": {
+      "bones": {
+        "flame": {
+          "scale": [
+            {
+              "time": 0,
+              "x": 1,
+              "y": 0.7
+            },
+            {
+              "time": 0.4,
+              "x": 1,
+              "y": 0.85
+            },
+            {
+              "time": 0.8,
+              "x": 1,
+              "y": 0.7
+            }
+          ]
+        }
+      }
+    },
+    "boost": {
+      "bones": {
+        "flame": {
+          "scale": [
+            {
+              "time": 0,
+              "x": 1,
+              "y": 1
+            },
+            {
+              "time": 0.15,
+              "x": 1.1,
+              "y": 1.5
+            },
+            {
+              "time": 0.3,
+              "x": 1,
+              "y": 1
+            }
+          ]
+        },
+        "nozzle": {
+          "translate": [
+            {
+              "time": 0,
+              "x": 0,
+              "y": 0
+            },
+            {
+              "time": 0.15,
+              "x": 0,
+              "y": -2
+            },
+            {
+              "time": 0.3,
+              "x": 0,
+              "y": 0
+            }
+          ]
+        }
+      }
+    }
+  }
+}

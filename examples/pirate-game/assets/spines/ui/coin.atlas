@@ -1,0 +1,6 @@
+coin.png
+size:64,64
+filter:Linear,Linear
+scale:1
+coin
+bounds:2,2,40,40

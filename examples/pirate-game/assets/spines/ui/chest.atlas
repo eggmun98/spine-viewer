@@ -1,0 +1,8 @@
+chest.png
+size:128,64
+filter:Linear,Linear
+scale:1
+base
+bounds:2,2,56,30
+lid
+bounds:60,2,58,20

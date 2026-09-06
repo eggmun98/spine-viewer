@@ -1,0 +1,142 @@
+{
+  "skeleton": {
+    "hash": "parrot",
+    "spine": "4.2.00",
+    "x": -36,
+    "y": 0,
+    "width": 72,
+    "height": 70,
+    "images": "./",
+    "audio": ""
+  },
+  "bones": [
+    {
+      "name": "root"
+    },
+    {
+      "name": "body",
+      "parent": "root",
+      "y": 34
+    },
+    {
+      "name": "wing",
+      "parent": "body",
+      "x": -2,
+      "y": 6
+    },
+    {
+      "name": "beak",
+      "parent": "body",
+      "x": 22,
+      "y": 2
+    }
+  ],
+  "slots": [
+    {
+      "name": "body",
+      "bone": "body",
+      "attachment": "body"
+    },
+    {
+      "name": "wing",
+      "bone": "wing",
+      "attachment": "wing"
+    },
+    {
+      "name": "beak",
+      "bone": "beak",
+      "attachment": "beak"
+    }
+  ],
+  "skins": [
+    {
+      "name": "default",
+      "attachments": {
+        "body": {
+          "body": {
+            "width": 40,
+            "height": 36
+          }
+        },
+        "wing": {
+          "wing": {
+            "x": -12,
+            "y": 2,
+            "width": 34,
+            "height": 16
+          }
+        },
+        "beak": {
+          "beak": {
+            "width": 14,
+            "height": 10
+          }
+        }
+      }
+    }
+  ],
+  "animations": {
+    "idle": {
+      "bones": {
+        "body": {
+          "translate": [
+            {
+              "time": 0,
+              "x": 0,
+              "y": 0
+            },
+            {
+              "time": 0.7,
+              "x": 0,
+              "y": 3
+            },
+            {
+              "time": 1.4,
+              "x": 0,
+              "y": 0
+            }
+          ]
+        }
+      }
+    },
+    "fly": {
+      "bones": {
+        "wing": {
+          "rotate": [
+            {
+              "time": 0,
+              "value": 30
+            },
+            {
+              "time": 0.15,
+              "value": -30
+            },
+            {
+              "time": 0.3,
+              "value": 30
+            }
+          ]
+        },
+        "body": {
+          "translate": [
+            {
+              "time": 0,
+              "x": 0,
+              "y": 0
+            },
+            {
+              "time": 0.15,
+              "x": 0,
+              "y": 6
+            },
+            {
+              "time": 0.3,
+              "x": 0,
+              "y": 0
+            }
+          ]
+        }
+      }
+    }
+  }
+}

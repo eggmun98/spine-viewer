@@ -1,0 +1,10 @@
+parrot.png
+size:128,64
+filter:Linear,Linear
+scale:1
+body
+bounds:2,2,40,36
+wing
+bounds:44,2,34,16
+beak
+bounds:80,2,14,10

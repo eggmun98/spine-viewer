@@ -1,0 +1,14 @@
+hero.png
+size:256,64
+filter:Linear,Linear
+scale:1
+head
+bounds:2,2,44,40
+hat
+bounds:48,2,52,18
+body
+bounds:102,2,40,46
+arm
+bounds:144,2,14,38
+leg
+bounds:160,2,16,36

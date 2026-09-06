@@ -25,6 +25,26 @@ Every skeleton in the workspace shows up in a sidebar tree, grouped by folder. C
 
 Use the refresh button in the view title after adding or re-exporting assets.
 
+## Try It
+
+The repository ships seven small demo skeletons under `examples/`. Clone it, open the folder in
+VS Code, and they appear in the sidebar — no Spine editor or project setup needed.
+
+```
+pirate-game/assets/spines
+  characters
+    hero          idle, wave, walk
+    parrot        idle, fly
+  ui
+    chest         idle, open
+    coin          idle, spin
+space-game/assets/spines
+  effects
+    explosion     burst, idle
+    thruster      idle, boost
+  ui / coin       idle, spin
+```
+
 ## Asset Discovery
 
 The extension looks for `.atlas` files anywhere in the workspace and treats the `.json` files

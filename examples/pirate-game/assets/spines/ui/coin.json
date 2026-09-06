@@ -1,0 +1,90 @@
+{
+  "skeleton": {
+    "hash": "coin",
+    "spine": "4.2.00",
+    "x": -24,
+    "y": 0,
+    "width": 48,
+    "height": 48,
+    "images": "./",
+    "audio": ""
+  },
+  "bones": [
+    {
+      "name": "root"
+    },
+    {
+      "name": "coin",
+      "parent": "root",
+      "y": 24
+    }
+  ],
+  "slots": [
+    {
+      "name": "coin",
+      "bone": "coin",
+      "attachment": "coin"
+    }
+  ],
+  "skins": [
+    {
+      "name": "default",
+      "attachments": {
+        "coin": {
+          "coin": {
+            "width": 40,
+            "height": 40
+          }
+        }
+      }
+    }
+  ],
+  "animations": {
+    "idle": {
+      "bones": {
+        "coin": {
+          "translate": [
+            {
+              "time": 0,
+              "x": 0,
+              "y": 0
+            },
+            {
+              "time": 0.8,
+              "x": 0,
+              "y": 4
+            },
+            {
+              "time": 1.6,
+              "x": 0,
+              "y": 0
+            }
+          ]
+        }
+      }
+    },
+    "spin": {
+      "bones": {
+        "coin": {
+          "scale": [
+            {
+              "time": 0,
+              "x": 1,
+              "y": 1
+            },
+            {
+              "time": 0.4,
+              "x": 0.05,
+              "y": 1
+            },
+            {
+              "time": 0.8,
+              "x": 1,
+              "y": 1
+            }
+          ]
+        }
+      }
+    }
+  }
+}
