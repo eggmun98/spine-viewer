@@ -45,7 +45,7 @@ select {
 
 .toolbar {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto auto auto auto;
+  grid-template-columns: minmax(0, 1fr) auto auto auto auto auto auto;
   gap: 8px;
   align-items: center;
   padding: 8px 12px;
@@ -75,6 +75,7 @@ select {
 }
 
 .select,
+.skin,
 .number,
 .toggle,
 .reset {
@@ -89,6 +90,11 @@ select {
 .select {
   min-width: 170px;
   max-width: 300px;
+}
+
+.skin {
+  min-width: 110px;
+  max-width: 200px;
 }
 
 .select:disabled {

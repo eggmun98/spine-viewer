@@ -151,6 +151,27 @@
           }
         }
       }
+    },
+    {
+      "name": "captain",
+      "attachments": {
+        "body": {
+          "body": {
+            "name": "body_gold",
+            "y": 23,
+            "width": 40,
+            "height": 46
+          }
+        },
+        "hat": {
+          "hat": {
+            "name": "hat_gold",
+            "y": 9,
+            "width": 52,
+            "height": 18
+          }
+        }
+      }
     }
   ],
   "events": {

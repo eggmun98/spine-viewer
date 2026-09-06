@@ -1,5 +1,5 @@
 hero.png
-size:256,64
+size:512,64
 filter:Linear,Linear
 scale:1
 head
@@ -12,3 +12,7 @@ arm
 bounds:144,2,14,38
 leg
 bounds:160,2,16,36
+body_gold
+bounds:178,2,40,46
+hat_gold
+bounds:220,2,52,18

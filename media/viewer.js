@@ -39,6 +39,7 @@ document.getElementById('app').innerHTML = `
         <div class="file-meta"></div>
       </div>
       <select class="select" title="Animation"></select>
+      <select class="skin hidden" title="Skin"></select>
       <label class="field" title="Zoom"><span>zoom</span>
         <input class="number scale" type="number" step="0.05" min="${MIN_SCALE}" max="${MAX_SCALE}" value="1">
       </label>
@@ -86,6 +87,7 @@ const els = {
   playhead: document.querySelector('.playhead'),
   trackEnd: document.querySelector('.track-end'),
   tip: document.querySelector('.tip'),
+  skinSelect: document.querySelector('.skin'),
   tracks: document.querySelector('.tracks'),
   trackButtons: document.querySelector('.track-buttons'),
   clearButton: document.querySelector('.clear'),
@@ -113,6 +115,10 @@ window.addEventListener('message', (event) => {
 
 els.animationSelect.addEventListener('change', () => {
   setTrackAnimation(state.activeTrack, els.animationSelect.value || null);
+});
+
+els.skinSelect.addEventListener('change', () => {
+  applySkin(els.skinSelect.value);
 });
 
 els.clearButton.addEventListener('click', () => {
@@ -265,6 +271,7 @@ async function loadSpine(payload) {
     state.viewport.removeChildren();
     state.viewport.addChild(state.spine);
 
+    renderSkins(skeletonData.skins);
     renderAnimations(
       skeletonData.animations.map((animation) => animation.name),
       keptAnimation,
@@ -380,6 +387,27 @@ function renderTrackButtons() {
     button.addEventListener('click', () => selectTrack(index));
     els.trackButtons.appendChild(button);
   }
+}
+
+function renderSkins(skins) {
+  els.skinSelect.innerHTML = '';
+  for (const skin of skins) {
+    const option = document.createElement('option');
+    option.value = skin.name;
+    option.textContent = skin.name;
+    els.skinSelect.appendChild(option);
+  }
+  // Most skeletons ship a lone "default" skin, so the control only earns a slot
+  // in the toolbar when there is a real choice.
+  els.skinSelect.classList.toggle('hidden', skins.length < 2);
+  if (skins.length) els.skinSelect.value = skins[0].name;
+}
+
+function applySkin(name) {
+  if (!state.spine) return;
+  state.spine.skeleton.setSkinByName(name);
+  state.spine.skeleton.setSlotsToSetupPose();
+  log(`skin: ${name}`);
 }
 
 async function fetchJson(url) {
