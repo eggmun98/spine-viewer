@@ -2,11 +2,12 @@
 
 Browse and preview Spine skeleton animations directly inside VS Code.
 
-This extension scans the current workspace for Spine skeleton JSON files, pairs each skeleton with a matching atlas in the same folder, and lets you play every animation from a single preview panel.
+Every skeleton in the workspace shows up in a sidebar tree, grouped by folder. Click one to play its animations.
 
 ## Features
 
-- Workspace-wide Spine skeleton list
+- Sidebar tree of every skeleton in the workspace, grouped by folder
+- Works with any folder layout: skeletons are found by their `.atlas`, not by a fixed assets path
 - Animation selector for each skeleton
 - Loop toggle
 - Manual scale input
@@ -18,23 +19,27 @@ This extension scans the current workspace for Spine skeleton JSON files, pairs 
 ## Usage
 
 1. Open a project that contains Spine assets.
-2. Open the Command Palette.
-3. Run `Spine Viewer: Open Spine Browser`.
-4. Select a skeleton from the left list.
-5. Choose an animation from the toolbar.
+2. Click the Spine Viewer icon in the Activity Bar.
+3. Expand a folder and click a skeleton.
+4. Choose an animation from the toolbar.
 
-On macOS the Command Palette shortcut is `Cmd+Shift+P`. On Windows and Linux it is `Ctrl+Shift+P`.
+Use the refresh button in the view title after adding or re-exporting assets.
 
 ## Asset Discovery
 
-The extension scans these workspace paths:
+The extension looks for `.atlas` files anywhere in the workspace and treats the `.json` files
+beside them as skeletons. Nothing is assumed about your folder names, so `static/assets/spines`,
+`Assets/Spine`, and `art/animations` all work the same way.
 
-- `static/assets/spines/**/*.json`
-- `public/assets/spines/**/*.json`
-- `assets/spines/**/*.json`
-- `src/assets/spines/**/*.json`
+Build output and dependency folders are skipped: `node_modules`, `.git`, `dist`, `build`, `out`,
+`coverage`, `storybook-static`, `.svelte-kit`, `.next`, `.nuxt`, `.cache`.
 
-Each skeleton JSON is matched with an `.atlas` file in the same folder. The extension first checks for an atlas with the same base name as the JSON file, then falls back to the folder's available atlas files.
+The tree hides path segments that every skeleton shares and folds away folders that hold a single
+skeleton, so it starts where your assets actually differ.
+
+Each skeleton is paired with an atlas in its own folder: one matching the skeleton's name if there
+is one, otherwise one named after the folder, otherwise the first atlas found. Skeleton files are
+only read when you select them, so opening a large monorepo stays fast.
 
 ## Spine License Requirement
 
@@ -56,6 +61,7 @@ If the preview panel opens but the canvas does not render, check:
 ## Known Limitations
 
 - Binary `.skel` files are not supported yet.
+- A non-skeleton `.json` sitting beside an atlas appears in the tree and reports an error when opened.
 - Rendering currently targets Spine runtime assets compatible with `@esotericsoftware/spine-pixi-v8`.
 - The extension expects atlas images to be local workspace files.
 
