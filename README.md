@@ -11,6 +11,8 @@ Every skeleton in the workspace shows up in a sidebar tree, grouped by folder. C
 - Sidebar tree of every skeleton in the workspace, grouped by folder
 - Works with any folder layout: skeletons are found by their `.atlas`, not by a fixed assets path
 - Animation selector for each skeleton
+- Four animation tracks, so a base move and an overlay can be previewed together
+- Skin selector for skeletons that ship more than one skin
 - Event timeline: a marker for every event key, a playhead, and the values as they fire
 - Playback speed, for checking timing frame by frame
 - Loop toggle
@@ -48,6 +50,13 @@ space-game/assets/spines
     thruster      idle, boost
   ui / coin       idle, spin
 ```
+
+## Tracks
+
+Spine plays animations in layers: a walk on track 0, a wave on track 1, a blink on track 2. The
+track row under the toolbar mirrors that. Pick a track, choose an animation, and it is applied
+there; **Clear** empties the selected track. The event timeline follows whichever track is
+selected.
 
 ## Events
 
