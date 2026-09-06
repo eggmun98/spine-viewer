@@ -6,7 +6,30 @@ Every skeleton in the workspace shows up in a sidebar tree, grouped by folder. C
 
 ![Browsing and playing Spine skeletons inside VS Code](https://raw.githubusercontent.com/eggmun98/spine-viewer/main/docs/demo.gif)
 
-## Highlights
+## Usage
+
+1. Open a project that contains Spine assets.
+2. Click the Spine Viewer icon in the Activity Bar.
+3. Expand a folder and click a skeleton.
+4. Choose an animation from the toolbar.
+
+Use the refresh button in the view title after adding or re-exporting assets.
+
+## Controls
+
+| | |
+| --- | --- |
+| Animation | Pick what plays on the selected track |
+| Tracks | Choose a track to load into; **Clear** empties it |
+| Skin | Shown when the skeleton has more than one |
+| Zoom | Manual scale, or scroll to zoom |
+| Speed | 0.1x to 3x, for reading timing frame by frame |
+| Loop | Toggle looping |
+| Reset | Restore zoom and pan (or double-click the canvas) |
+
+Drag to pan, scroll to zoom, double-click to recentre.
+
+## How It Works
 
 **Finds your skeletons wherever they live.** Discovery keys off `.atlas` files rather than a fixed
 assets path, so `static/assets/spines`, `Assets/Spine`, and `art/animations` all work without
@@ -29,31 +52,6 @@ away rather than invisible.
 
 **Nothing to install.** The Pixi and Spine runtimes are bundled into the extension. No project
 setup, no dev server, no dependency on what your workspace happens to have installed.
-
-## Controls
-
-| | |
-| --- | --- |
-| Animation | Pick what plays on the selected track |
-| Tracks | Choose a track to load into; **Clear** empties it |
-| Skin | Shown when the skeleton has more than one |
-| Zoom | Manual scale, or scroll to zoom |
-| Speed | 0.1x to 3x, for reading timing frame by frame |
-| Loop | Toggle looping |
-| Reset | Restore zoom and pan (or double-click the canvas) |
-
-Drag to pan. Atlas page images are loaded by name straight from the atlas, so any format VS Code
-can decode works — `.png`, `.webp`, `.jpg`, `.jpeg`, and `.avif` among them. Page names that point
-into a subfolder resolve too.
-
-## Usage
-
-1. Open a project that contains Spine assets.
-2. Click the Spine Viewer icon in the Activity Bar.
-3. Expand a folder and click a skeleton.
-4. Choose an animation from the toolbar.
-
-Use the refresh button in the view title after adding or re-exporting assets.
 
 ## Try It
 
@@ -103,6 +101,10 @@ Build output and dependency folders are skipped: `node_modules`, `.git`, `dist`,
 
 The tree hides path segments that every skeleton shares and folds away folders that hold a single
 skeleton, so it starts where your assets actually differ.
+
+Atlas page images are loaded by name straight from the atlas, so any format VS Code can decode
+works — `.png`, `.webp`, `.jpg`, `.jpeg`, and `.avif` among them. Page names that point into a
+subfolder resolve too.
 
 Each skeleton is paired with an atlas in its own folder: one matching the skeleton's name if there
 is one, otherwise one named after the folder, otherwise the first atlas found. Skeleton files are
