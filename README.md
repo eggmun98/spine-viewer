@@ -6,21 +6,45 @@ Every skeleton in the workspace shows up in a sidebar tree, grouped by folder. C
 
 ![Browsing and playing Spine skeletons inside VS Code](https://raw.githubusercontent.com/eggmun98/spine-viewer/main/docs/demo.gif)
 
-## Features
+## Highlights
 
-- Sidebar tree of every skeleton in the workspace, grouped by folder
-- Works with any folder layout: skeletons are found by their `.atlas`, not by a fixed assets path
-- Animation selector for each skeleton
-- Four animation tracks, so a base move and an overlay can be previewed together
-- Skin selector for skeletons that ship more than one skin
-- Event timeline: a marker for every event key, a playhead, and the values as they fire
-- Playback speed, for checking timing frame by frame
-- Loop toggle
-- Manual scale input
-- Mouse drag to pan the preview
-- Mouse wheel zoom
-- Double-click or Reset button to restore the view
-- Supports atlas pages using `.png`, `.webp`, `.jpg`, and `.jpeg`
+**Finds your skeletons wherever they live.** Discovery keys off `.atlas` files rather than a fixed
+assets path, so `static/assets/spines`, `Assets/Spine`, and `art/animations` all work without
+configuration. The tree hides the path segments every skeleton shares and folds away folders that
+hold a single skeleton, so it starts where your assets actually differ.
+
+**Fast on large repositories.** Only paths are collected up front; a skeleton is read the moment
+you click it. A monorepo with a thousand skeletons opens as quickly as one with ten.
+
+**Event timeline.** Animations with event keys get a timeline under the preview: a marker per
+event, a playhead that follows playback, and a flash with the values as each one fires. This is
+the view you need to line a sound or an effect up with an animation.
+
+**Animation tracks.** Spine layers animations — a walk on track 0, a wave on track 1. Four tracks
+let you reproduce the combination your game code actually plays, instead of checking one animation
+at a time.
+
+**Skins.** Skeletons that ship more than one skin get a selector, so alternate looks are one click
+away rather than invisible.
+
+**Nothing to install.** The Pixi and Spine runtimes are bundled into the extension. No project
+setup, no dev server, no dependency on what your workspace happens to have installed.
+
+## Controls
+
+| | |
+| --- | --- |
+| Animation | Pick what plays on the selected track |
+| Tracks | Choose a track to load into; **Clear** empties it |
+| Skin | Shown when the skeleton has more than one |
+| Zoom | Manual scale, or scroll to zoom |
+| Speed | 0.1x to 3x, for reading timing frame by frame |
+| Loop | Toggle looping |
+| Reset | Restore zoom and pan (or double-click the canvas) |
+
+Drag to pan. Atlas page images are loaded by name straight from the atlas, so any format VS Code
+can decode works — `.png`, `.webp`, `.jpg`, `.jpeg`, and `.avif` among them. Page names that point
+into a subfolder resolve too.
 
 ## Usage
 
@@ -53,19 +77,20 @@ space-game/assets/spines
 
 ## Tracks
 
-Spine plays animations in layers: a walk on track 0, a wave on track 1, a blink on track 2. The
-track row under the toolbar mirrors that. Pick a track, choose an animation, and it is applied
-there; **Clear** empties the selected track. The event timeline follows whichever track is
-selected.
+A track is a slot for one playing animation, and a skeleton file does not record them — your game
+code decides what goes where. The viewer gives you the same four slots to work with.
+
+Click a track number, then pick an animation: it loads into that track. Track 0 starts with the
+skeleton's default animation and the rest start empty. **Clear** empties the selected track, and
+the event timeline follows whichever track is selected.
+
+Layering only shows when the two animations drive different bones. If both animate the same bone,
+the higher track wins and the lower one is hidden — which is exactly how it behaves in game.
 
 ## Events
 
-Animations that carry event keys get a timeline under the preview. Each marker sits at the event's
-time, the playhead tracks playback, and a marker flashes as its event fires. Click any marker to
-print its name, time, and int/float/string values.
-
-Animations without events do not show the timeline. Slow the playback speed down to read events
-that fire close together.
+Click any marker to print its name, time, and int/float/string values. Animations without events
+do not show the timeline. Slow the playback speed down to read events that fire close together.
 
 ## Asset Discovery
 
@@ -104,8 +129,11 @@ If the preview panel opens but the canvas does not render, check:
 
 - Binary `.skel` files are not supported yet.
 - A non-skeleton `.json` sitting beside an atlas appears in the tree and reports an error when opened.
-- Rendering currently targets Spine runtime assets compatible with `@esotericsoftware/spine-pixi-v8`.
-- The extension expects atlas images to be local workspace files.
+- Rendering targets assets compatible with `@esotericsoftware/spine-pixi-v8` 4.2. Skeletons exported
+  from a much newer or older Spine version may not load.
+- Compressed atlas pages (`.ktx`, `.basis`) cannot be decoded.
+- Atlas images must be local workspace files.
+- The skeleton and its atlas must sit in the same folder.
 
 ## License
 
