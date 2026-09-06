@@ -3,28 +3,37 @@
   "configurations": [
     {
       "name": "Run Spine Viewer Extension",
-      "type": "extensionHost",
       "request": "launch",
+      "type": "extensionHost",
       "args": [
         "--extensionDevelopmentPath=${workspaceFolder}",
         "--new-window",
-        "--disable-extension",
-        "Anthropic.claude-code-extension",
-        "/Users/mun/Desktop/dev-new/dev-work/stake_front/apps/2010_winsofolympus"
+        "${workspaceFolder}"
       ],
+      "preLaunchTask": "npm: build",
       "sourceMaps": false,
-      "resolveSourceMapLocations": [
-        "${workspaceFolder}/**",
-        "!**/node_modules/**",
-        "!/Applications/**",
-        "!/Users/mun/.vscode/extensions/**"
+      "skipFiles": ["<node_internals>/**"]
+    },
+    {
+      "name": "Run Spine Viewer Extension (pick a folder)",
+      "request": "launch",
+      "type": "extensionHost",
+      "args": [
+        "--extensionDevelopmentPath=${workspaceFolder}",
+        "--new-window",
+        "${input:targetFolder}"
       ],
-      "skipFiles": [
-        "<node_internals>/**",
-        "/Applications/**",
-        "/Users/mun/.vscode/extensions/**"
-      ],
-      "outFiles": []
+      "preLaunchTask": "npm: build",
+      "sourceMaps": false,
+      "skipFiles": ["<node_internals>/**"]
+    }
+  ],
+  "inputs": [
+    {
+      "id": "targetFolder",
+      "type": "promptString",
+      "description": "Folder to open in the Extension Development Host",
+      "default": "${workspaceFolder}/examples"
     }
   ]
 }

@@ -4,6 +4,8 @@ Browse and preview Spine skeleton animations directly inside VS Code.
 
 Every skeleton in the workspace shows up in a sidebar tree, grouped by folder. Click one to play its animations.
 
+![Browsing and playing Spine skeletons inside VS Code](https://raw.githubusercontent.com/eggmun98/spine-viewer/main/docs/demo.gif)
+
 ## Features
 
 - Sidebar tree of every skeleton in the workspace, grouped by folder
