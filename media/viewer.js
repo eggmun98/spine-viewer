@@ -156,54 +156,16 @@ log(`viewer booted: ${state.items.length} spines, selected=${state.selectedId ??
 initStage();
 
 async function loadRuntime() {
-  if (!data.runtime.pixiUrl || !data.runtime.spineUrl) {
-    log(`runtime urls missing: pixi=${data.runtime.pixiUrl ?? 'missing'}, spine=${data.runtime.spineUrl ?? 'missing'}`);
-    return null;
-  }
-
-  log('importing pixi runtime');
-  const pixi = await import(data.runtime.pixiUrl);
-  globalThis.PIXI = pixi;
-
-  if (data.runtime.unsafeEvalUrl) {
-    log('loading pixi unsafe-eval polyfill');
-    await loadScript(data.runtime.unsafeEvalUrl);
-    log('pixi unsafe-eval polyfill loaded');
-  } else {
-    log('pixi unsafe-eval polyfill missing');
-  }
-
-  log('importing spine runtime');
-  const spineRuntime = await import(data.runtime.spineUrl);
-  log(`runtime imported: pixi keys=${Object.keys(pixi).length}, spine keys=${Object.keys(spineRuntime).length}`);
-
-  return {
-    pixi,
-    Spine: spineRuntime.Spine,
-    AtlasAttachmentLoader: spineRuntime.AtlasAttachmentLoader,
-    SkeletonJson: spineRuntime.SkeletonJson,
-    TextureAtlas: spineRuntime.TextureAtlas,
-    SpineTexture: spineRuntime.SpineTexture,
-  };
-}
-
-function loadScript(url) {
-  return new Promise((resolve, reject) => {
-    const script = document.createElement('script');
-    script.src = url;
-    script.onload = () => resolve();
-    script.onerror = () => reject(new Error(`Failed to load script: ${url}`));
-    document.head.appendChild(script);
-  });
+  log('importing bundled pixi/spine runtime');
+  const runtime = await import(data.runtimeUrl);
+  log(`runtime imported: pixi keys=${Object.keys(runtime.pixi).length}`);
+  return runtime;
 }
 
 async function initStage() {
   setStatus('Loading Pixi/Spine runtime...');
   const runtime = await modulesReady;
-  if (!runtime) {
-    setMessage('Pixi/Spine runtime bundle was not found. Animation names are still available.');
-    return;
-  }
+  if (!runtime) return;
   setStatus('Runtime loaded. Initializing canvas...');
   log(`stage size before init: ${els.stage.clientWidth} x ${els.stage.clientHeight}`);
 

@@ -8,7 +8,6 @@ const JSON_GLOBS = [
   'src/assets/spines/**/*.json',
 ];
 const EXCLUDE_GLOB = '**/{node_modules,.git,dist,build,storybook-static}/**';
-const RUNTIME_EXCLUDE_GLOB = '**/{.git,dist,build,storybook-static}/**';
 
 async function activate(context) {
   let openedAutomatically = false;
@@ -42,7 +41,6 @@ async function activate(context) {
       context,
       panel,
       spines: [],
-      runtime: { pixi: null, spine: null },
       initialMessage: 'Scanning workspace spines...',
     });
 
@@ -58,16 +56,10 @@ async function activate(context) {
           const spines = await scanWorkspaceSpines();
           log(`Found ${spines.length} skeletons.`);
           log(`Skeletons with atlas: ${spines.filter((item) => item.atlasUri).length}.`);
-          const runtime = await findRuntimeBundles();
-          log(`Pixi runtime: ${runtime.pixi?.fsPath ?? 'missing'}`);
-          log(`Spine runtime: ${runtime.spine?.fsPath ?? 'missing'}`);
-          log(`Pixi unsafe-eval polyfill: ${runtime.unsafeEval?.fsPath ?? 'missing'}`);
-
           panel.webview.html = getWebviewHtml({
             context,
             panel,
             spines,
-            runtime,
             initialMessage: spines.length
               ? ''
               : 'No Spine skeleton JSON files were found in this workspace.',
@@ -83,7 +75,6 @@ async function activate(context) {
         context,
         panel,
         spines: [],
-      runtime: { pixi: null, spine: null },
         initialMessage: message,
       });
       vscode.window.showErrorMessage(`Spine Viewer failed: ${message}`);
@@ -281,56 +272,12 @@ function pickDefaultAnimation(animations) {
   );
 }
 
-async function findRuntimeBundles() {
-  const pixiUris = await vscode.workspace.findFiles(
-    '**/node_modules/.vite/deps/pixi__js.js',
-    RUNTIME_EXCLUDE_GLOB,
-    20,
-  );
-  const spineUris = await vscode.workspace.findFiles(
-    '**/node_modules/.vite/deps/@esotericsoftware_spine-pixi-v8.js',
-    RUNTIME_EXCLUDE_GLOB,
-    20,
-  );
-  const unsafeEvalUri = await findPixiUnsafeEvalBundle(pixiUris[0]);
-
-  return {
-    pixi: pixiUris[0] ?? null,
-    spine: spineUris[0] ?? null,
-    unsafeEval: unsafeEvalUri,
-  };
-}
-
-async function findPixiUnsafeEvalBundle(pixiBundleUri) {
-  const candidates = [];
-
-  if (pixiBundleUri) {
-    const nodeModulesDir = path.resolve(path.dirname(pixiBundleUri.fsPath), '..', '..');
-    candidates.push(path.join(nodeModulesDir, 'pixi.js', 'dist', 'packages', 'unsafe-eval.js'));
-  }
-
-  for (const folder of vscode.workspace.workspaceFolders ?? []) {
-    candidates.push(path.join(folder.uri.fsPath, 'node_modules', 'pixi.js', 'dist', 'packages', 'unsafe-eval.js'));
-  }
-
-  for (const filePath of candidates) {
-    const uri = vscode.Uri.file(filePath);
-    if (await exists(uri)) {
-      return uri;
-    }
-  }
-
-  return null;
-}
-
-function getWebviewHtml({ context, panel, spines, runtime, initialMessage = '' }) {
+function getWebviewHtml({ context, panel, spines, initialMessage = '' }) {
   const { webview } = panel;
   const nonce = getNonce();
   const cssUri = webview.asWebviewUri(vscode.Uri.joinPath(context.extensionUri, 'media', 'viewer.css'));
   const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(context.extensionUri, 'media', 'viewer.js'));
-  const pixiUri = runtime.pixi ? webview.asWebviewUri(runtime.pixi) : null;
-  const spineUri = runtime.spine ? webview.asWebviewUri(runtime.spine) : null;
-  const unsafeEvalUri = runtime.unsafeEval ? webview.asWebviewUri(runtime.unsafeEval) : null;
+  const runtimeUri = webview.asWebviewUri(vscode.Uri.joinPath(context.extensionUri, 'media', 'runtime.js'));
 
   const payload = {
     spines: spines.map((item) => ({
@@ -344,11 +291,7 @@ function getWebviewHtml({ context, panel, spines, runtime, initialMessage = '' }
         ]),
       ),
     })),
-    runtime: {
-      pixiUrl: pixiUri?.toString() ?? null,
-      spineUrl: spineUri?.toString() ?? null,
-      unsafeEvalUrl: unsafeEvalUri?.toString() ?? null,
-    },
+    runtimeUrl: runtimeUri.toString(),
     initialMessage,
   };
 

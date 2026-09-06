@@ -36,23 +36,20 @@ The extension scans these workspace paths:
 
 Each skeleton JSON is matched with an `.atlas` file in the same folder. The extension first checks for an atlas with the same base name as the JSON file, then falls back to the folder's available atlas files.
 
-## Runtime Requirement
+## Spine License Requirement
 
-The preview renderer uses the project's existing Vite dependency cache for:
+The renderer ships with the Spine Runtimes (`@esotericsoftware/spine-pixi-v8`) bundled into the
+extension, so it works in any workspace with no project setup.
 
-- `pixi.js`
-- `@esotericsoftware/spine-pixi-v8`
-
-If those bundles are not available in the workspace, the extension can still list skeletons and animations, but the preview canvas cannot render.
-
-For projects that use pnpm or npm workspaces, install dependencies and run the project or Storybook once so Vite creates `node_modules/.vite/deps`.
+The Spine Runtimes are not MIT licensed. Under the Spine Runtimes License Agreement, **each user
+of this extension must hold their own Spine Editor license.** The full agreement is included as
+`LICENSE-spine-runtimes.txt` and is preserved in the bundled runtime.
 
 ## Troubleshooting
 
 If the preview panel opens but the canvas does not render, check:
 
 - `View > Output > Spine Viewer`
-- Whether the project has installed dependencies
 - Whether the skeleton JSON, atlas file, and atlas page images are in the same folder
 - Whether the atlas page names exactly match the image filenames
 
