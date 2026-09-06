@@ -4,6 +4,9 @@ const MIN_SCALE = 0.05;
 const MAX_SCALE = 10;
 const MIN_SPEED = 0.1;
 const MAX_SPEED = 3;
+// Four is plenty to preview the layering a game actually uses (base move,
+// upper body, face, one spare) without turning the strip into a wall.
+const TRACK_COUNT = 4;
 
 const vscode = acquireVsCodeApi();
 
@@ -12,12 +15,14 @@ let runtimeRef = null;
 
 const state = {
   loadedUrl: null,
-  animation: null,
   loop: true,
   scale: 1,
   speed: 1,
   timeline: null,
   playheadFrame: null,
+  animations: [],
+  tracks: [],
+  activeTrack: 0,
   app: null,
   viewport: null,
   spine: null,
@@ -42,6 +47,11 @@ document.getElementById('app').innerHTML = `
       </label>
       <button class="toggle active" type="button" title="Toggle looping">Loop</button>
       <button class="reset" type="button" title="Reset zoom and pan">Reset</button>
+    </div>
+    <div class="tracks hidden">
+      <span class="tracks-title">Tracks</span>
+      <div class="track-buttons"></div>
+      <button class="clear" type="button" title="Clear the selected track">Clear</button>
     </div>
     <div class="stage-wrap">
       <div id="stage"></div>
@@ -76,6 +86,9 @@ const els = {
   playhead: document.querySelector('.playhead'),
   trackEnd: document.querySelector('.track-end'),
   tip: document.querySelector('.tip'),
+  tracks: document.querySelector('.tracks'),
+  trackButtons: document.querySelector('.track-buttons'),
+  clearButton: document.querySelector('.clear'),
   loopButton: document.querySelector('.toggle'),
   resetButton: document.querySelector('.reset'),
   stage: document.getElementById('stage'),
@@ -99,8 +112,11 @@ window.addEventListener('message', (event) => {
 });
 
 els.animationSelect.addEventListener('change', () => {
-  state.animation = els.animationSelect.value;
-  playSelectedAnimation();
+  setTrackAnimation(state.activeTrack, els.animationSelect.value || null);
+});
+
+els.clearButton.addEventListener('click', () => {
+  setTrackAnimation(state.activeTrack, null);
 });
 
 els.scaleInput.addEventListener('input', () => {
@@ -116,7 +132,7 @@ els.speedInput.addEventListener('input', () => {
 els.loopButton.addEventListener('click', () => {
   state.loop = !state.loop;
   els.loopButton.classList.toggle('active', state.loop);
-  playSelectedAnimation();
+  setTrackAnimation(state.activeTrack, state.tracks[state.activeTrack]);
 });
 
 els.resetButton.addEventListener('click', resetView);
@@ -208,7 +224,7 @@ async function createStage(runtime) {
 async function loadSpine(payload) {
   const token = (state.loadToken += 1);
   const isReload = state.loadedUrl === baseUrl(payload.skeletonUrl);
-  const keptAnimation = isReload ? state.animation : null;
+  const keptAnimation = isReload ? state.tracks[state.activeTrack] : null;
 
   els.fileName.textContent = payload.name;
   els.fileMeta.textContent = payload.atlasName ?? payload.relativePath ?? '';
@@ -259,7 +275,6 @@ async function loadSpine(payload) {
       resetPan();
     }
     state.loadedUrl = baseUrl(payload.skeletonUrl);
-    playSelectedAnimation();
     fitSpine();
     setMessage('');
     log(`load done: ${payload.name}, animations=${skeletonData.animations.length}`);
@@ -286,18 +301,27 @@ function describeError(error, payload) {
 }
 
 function renderAnimations(animations, preferred = null) {
-  state.animation = animations.includes(preferred) ? preferred : pickDefault(animations);
+  state.animations = animations;
   els.animationSelect.innerHTML = '';
+
+  const empty = document.createElement('option');
+  empty.value = '';
+  empty.textContent = animations.length ? '— none —' : 'no animations';
+  els.animationSelect.appendChild(empty);
 
   for (const animation of animations) {
     const option = document.createElement('option');
     option.value = animation;
     option.textContent = animation;
-    option.selected = animation === state.animation;
     els.animationSelect.appendChild(option);
   }
 
   els.animationSelect.disabled = animations.length === 0;
+
+  state.tracks = new Array(TRACK_COUNT).fill(null);
+  state.activeTrack = 0;
+  renderTrackButtons();
+  setTrackAnimation(0, animations.includes(preferred) ? preferred : pickDefault(animations));
 }
 
 function pickDefault(animations) {
@@ -307,6 +331,55 @@ function pickDefault(animations) {
     animations[0] ??
     null
   );
+}
+
+// Spine layers animations across tracks, so the viewer mirrors that: a base move
+// and an overlay can be checked together instead of one at a time.
+function setTrackAnimation(trackIndex, animationName) {
+  if (!state.spine) return;
+
+  state.tracks[trackIndex] = animationName;
+  if (animationName) {
+    state.spine.state.setAnimation(trackIndex, animationName, state.loop);
+  } else if (state.spine.state.tracks[trackIndex]) {
+    state.spine.state.setEmptyAnimation(trackIndex, 0.15);
+  }
+
+  state.activeTrack = trackIndex;
+  syncTrackUi();
+  renderTimeline();
+}
+
+function selectTrack(trackIndex) {
+  state.activeTrack = trackIndex;
+  syncTrackUi();
+  renderTimeline();
+}
+
+function syncTrackUi() {
+  els.animationSelect.value = state.tracks[state.activeTrack] ?? '';
+  els.tracks.classList.toggle('hidden', state.animations.length === 0);
+
+  for (const button of els.trackButtons.children) {
+    const index = Number(button.dataset.track);
+    button.classList.toggle('active', index === state.activeTrack);
+    button.classList.toggle('filled', Boolean(state.tracks[index]));
+    button.querySelector('.track-name').textContent = state.tracks[index] ?? '—';
+  }
+}
+
+function renderTrackButtons() {
+  els.trackButtons.innerHTML = '';
+
+  for (let index = 0; index < TRACK_COUNT; index += 1) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'track-button';
+    button.dataset.track = String(index);
+    button.innerHTML = `<span class="track-index">${index}</span><span class="track-name">—</span>`;
+    button.addEventListener('click', () => selectTrack(index));
+    els.trackButtons.appendChild(button);
+  }
 }
 
 async function fetchJson(url) {
@@ -371,20 +444,14 @@ function withTimeout(promise, timeoutMs, message) {
 function clearSpine() {
   stopPlayhead();
   state.timeline = null;
+  state.tracks = [];
   els.events.classList.add('hidden');
+  els.tracks.classList.add('hidden');
   if (!state.spine) return;
   state.spine.destroy({ children: true });
   state.spine = null;
 }
 
-function playSelectedAnimation() {
-  if (!state.spine || !state.animation) return;
-  state.spine.state.setAnimation(0, state.animation, state.loop);
-  renderTimeline();
-}
-
-// Spine stores an animation's events in an EventTimeline rather than on the
-// animation itself, so read them out to place the markers.
 function readEvents(animationName) {
   const data = state.spine?.skeleton.data;
   const animation = data?.animations.find((item) => item.name === animationName);
@@ -408,7 +475,7 @@ function readEvents(animationName) {
 function renderTimeline() {
   stopPlayhead();
   hideTip();
-  state.timeline = readEvents(state.animation);
+  state.timeline = readEvents(state.tracks[state.activeTrack]);
   const hasEvents = (state.timeline?.events.length ?? 0) > 0;
   els.events.classList.toggle('hidden', !hasEvents);
   els.eventsLast.textContent = '';
@@ -468,7 +535,7 @@ function hideTip() {
 }
 
 function showFiredEvent(entry, event) {
-  if (entry.trackIndex !== 0) return;
+  if (entry.trackIndex !== state.activeTrack) return;
   const index = state.timeline?.events.findIndex(
     (item) => item.name === event.data.name && Math.abs(item.time - event.time) < 0.001,
   );
@@ -489,7 +556,7 @@ function showFiredEvent(entry, event) {
 
 function startPlayhead() {
   const step = () => {
-    const track = state.spine?.state.tracks[0];
+    const track = state.spine?.state.tracks[state.activeTrack];
     const duration = state.timeline?.duration ?? 0;
     if (track && duration > 0) {
       const position = state.loop ? track.trackTime % duration : Math.min(track.trackTime, duration);
