@@ -4,6 +4,7 @@
   "description": "Browse and preview Spine skeleton animations from the current VS Code workspace.",
   "version": "0.0.1",
   "publisher": "local",
+  "icon": "icon.png",
   "license": "MIT",
   "engines": {
     "vscode": "^1.90.0"
