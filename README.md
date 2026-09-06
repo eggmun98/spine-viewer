@@ -64,4 +64,10 @@ If the preview panel opens but the canvas does not render, check:
 
 ## License
 
-MIT
+This extension is MIT licensed. See `LICENSE`.
+
+The bundled Spine Runtimes are licensed separately under the
+[Spine Runtimes License Agreement](https://esotericsoftware.com/spine-runtimes-license)
+and require each user to hold a Spine Editor license. See `LICENSE-spine-runtimes.txt`.
+
+Pixi.js is MIT licensed.
