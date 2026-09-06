@@ -38,5 +38,10 @@
   },
   "devDependencies": {
     "esbuild": "^0.28.2"
+  },
+  "scripts": {
+    "build": "node esbuild.js",
+    "watch": "node esbuild.js --watch",
+    "vscode:prepublish": "npm run build"
   }
 }

@@ -1,3 +1,4 @@
 node_modules/
+media/runtime.js
 *.vsix
 .DS_Store
